@@ -1,19 +1,25 @@
-import type { StyleProp, ViewStyle } from 'react-native';
+import React from "react";
 
-export type OnLoadEventPayload = {
-  url: string;
-};
+export interface StickyTableTheme {
+    background: string;
+    foreground: string;
+    foregroundSecondary?: string;
+    border: string;
+    muted: string;
+}
 
-export type StickyTableModuleEvents = {
-  onChange: (params: ChangeEventPayload) => void;
-};
+export interface TableColumn<T = any> {
+    id: string;
+    label: string;
+    accessor: keyof T | ((item: T) => React.ReactNode);
+    width?: number; // Fixed width in pixels
+    minWidth?: number; // Minimum width
+    flex?: number; // Flex grow factor
+    align?: "left" | "center" | "right";
+    sticky?: "left" | "right"; // Sticky position
+}
 
-export type ChangeEventPayload = {
-  value: string;
-};
-
-export type StickyTableViewProps = {
-  url: string;
-  onLoad: (event: { nativeEvent: OnLoadEventPayload }) => void;
-  style?: StyleProp<ViewStyle>;
-};
+export interface StickyColumnConfig {
+    position: "left" | "right";
+    columnId: string;
+}
