@@ -1,6 +1,6 @@
 {
     "name": "@robin-ui/react-native-sticky-table",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "Native tables with sticky column support",
     "main": "build/index.js",
     "types": "build/index.d.ts",
