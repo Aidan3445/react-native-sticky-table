@@ -1,2 +1,2 @@
 export * from "./StickyTable.types";
-export { default as StickyTableView } from "./StickyTableView";
+export { default as StickyTable } from "./StickyTableView";
