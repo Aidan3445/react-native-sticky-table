@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android", "web"],
+  "apple": {
+    "modules": ["StickyTableModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.stickytable.StickyTableModule"]
+  }
+}
