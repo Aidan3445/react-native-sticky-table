@@ -23,3 +23,5 @@ export interface StickyColumnConfig {
     position: "left" | "right";
     columnId: string;
 }
+
+export interface ColumnSorter<T = any> extends Record<string, (a: T, b: T) => number> {}

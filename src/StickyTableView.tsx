@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Animated, FlatList, RefreshControl, ScrollView, StyleSheet, Text, TextStyle, TouchableOpacity, View, ViewStyle } from "react-native";
-import { StickyColumnConfig, StickyTableTheme, TableColumn } from "./StickyTable.types";
+import { StickyColumnConfig, StickyTableTheme, TableColumn, ColumnSorter } from "./StickyTable.types";
 
 // Create AnimatedFlatList for native-driven scroll events
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -37,6 +37,7 @@ export interface StickyTableProps<T> {
     emptyMessage?: string;
     emptyAction?: React.ReactNode;
     keyExtractor?: (item: T) => string;
+    columnSorters?: ColumnSorter;
     // Style overrides
     containerStyle?: ViewStyle;
     headerRowStyle?: ViewStyle;
@@ -65,6 +66,7 @@ export default function StickyTable<T>({
     emptyMessage = "No items found",
     emptyAction,
     keyExtractor = defaultKeyExtractor,
+    columnSorters,
     containerStyle,
     headerRowStyle,
     headerTextStyle,
@@ -128,7 +130,7 @@ export default function StickyTable<T>({
     const sortTable = useCallback(
         (column: TableColumn<T>) => {
             const newDirection = direction === "desc" ? "asc" : "desc";
-
+ 
             // Get the sort key
             let sortKey: string;
             if (typeof column.accessor === "function") {
@@ -136,6 +138,19 @@ export default function StickyTable<T>({
                 return;
             } else {
                 sortKey = String(column.accessor);
+            }
+
+            const sorter = columnSorters?.[column.id];
+            if (sorter) {
+                const sortedData = [...tableData].sort((a: T, b: T) => {
+                    const result = sorter(a, b);
+                    console.log('used custom sorter for column', column.id, 'result:', result);
+                    return newDirection === "asc" ? result : -result;
+                });
+                setSelectedColumn(column.id);
+                setDirection(newDirection);
+                setTableData(sortedData);
+                return;
             }
 
             // Simple Sort (replacing lodash)
