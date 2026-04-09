@@ -17,11 +17,10 @@ export interface TableColumn<T = any> {
     flex?: number; // Flex grow factor
     align?: "left" | "center" | "right";
     sticky?: "left" | "right"; // Sticky position
+    sorter?: (a: T, b: T) => number; // Optional sorting function
 }
 
 export interface StickyColumnConfig {
     position: "left" | "right";
     columnId: string;
 }
-
-export interface ColumnSorter<T = any> extends Record<string, (a: T, b: T) => number> {}

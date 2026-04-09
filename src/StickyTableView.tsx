@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Animated, FlatList, RefreshControl, ScrollView, StyleSheet, Text, TextStyle, TouchableOpacity, View, ViewStyle } from "react-native";
-import { StickyColumnConfig, StickyTableTheme, TableColumn, ColumnSorter } from "./StickyTable.types";
+import { StickyColumnConfig, StickyTableTheme, TableColumn } from "./StickyTable.types";
 
 // Create AnimatedFlatList for native-driven scroll events
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -37,7 +37,6 @@ export interface StickyTableProps<T> {
     emptyMessage?: string;
     emptyAction?: React.ReactNode;
     keyExtractor?: (item: T) => string;
-    columnSorters?: ColumnSorter;
     // Style overrides
     containerStyle?: ViewStyle;
     headerRowStyle?: ViewStyle;
@@ -66,7 +65,6 @@ export default function StickyTable<T>({
     emptyMessage = "No items found",
     emptyAction,
     keyExtractor = defaultKeyExtractor,
-    columnSorters,
     containerStyle,
     headerRowStyle,
     headerTextStyle,
@@ -131,16 +129,18 @@ export default function StickyTable<T>({
         (column: TableColumn<T>) => {
             const newDirection = direction === "desc" ? "asc" : "desc";
  
+            // Try to get the sort function
+            const sorter = column.sorter;
+
             // Get the sort key
             let sortKey: string;
-            if (typeof column.accessor === "function") {
-                // Can't sort on function accessors easily, skip for now
+            if (typeof column.accessor === "function" && !sorter) {
+                // Can't sort on function accessors without sorter easily, skip for now
                 return;
             } else {
                 sortKey = String(column.accessor);
             }
 
-            const sorter = columnSorters?.[column.id];
             if (sorter) {
                 const sortedData = [...tableData].sort((a: T, b: T) => {
                     const result = sorter(a, b);
