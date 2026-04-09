@@ -84,6 +84,23 @@ export default function App() {
             align: "right",
         },
     ];
+    const columnSorters = {
+        name: (a: UserData, b: UserData) => parseInt(a.name.split(" ")[1]) - parseInt(b.name.split(" ")[1]),
+        lastLogin: (a: UserData, b: UserData) => {
+            // Due to versioning we must extract the date components manually instead of using Date.parse
+            const aDate = {
+                year: parseInt(a.lastLogin.split("/")[2]),
+                month: parseInt(a.lastLogin.split("/")[0]),
+                day: parseInt(a.lastLogin.split("/")[1]),
+            };
+            const bDate = {
+                year: parseInt(b.lastLogin.split("/")[2]),
+                month: parseInt(b.lastLogin.split("/")[0]),
+                day: parseInt(b.lastLogin.split("/")[1]),
+            };
+            return new Date(aDate.year, aDate.month - 1, aDate.day).getTime() - new Date(bDate.year, bDate.month - 1, bDate.day).getTime();
+        },
+    };
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
@@ -96,6 +113,7 @@ export default function App() {
                     theme={theme}
                     stickyColumn={{ columnId: "name", position: "left" }}
                     onItemPress={(item) => console.log("Pressed:", item.name)}
+                    columnSorters={columnSorters}
                 />
             </View>
         </SafeAreaView>
