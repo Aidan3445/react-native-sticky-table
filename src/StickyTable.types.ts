@@ -23,3 +23,5 @@ export interface StickyColumnConfig {
     position: "left" | "right";
     columnId: string;
 }
+
+export type OverscrollHeaderBehavior = "bounce" | "fixed";

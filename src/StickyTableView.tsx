@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Animated, FlatList, RefreshControl, ScrollView, StyleSheet, Text, TextStyle, TouchableOpacity, View, ViewStyle } from "react-native";
-import { StickyColumnConfig, StickyTableTheme, TableColumn } from "./StickyTable.types";
+import { OverscrollHeaderBehavior, StickyColumnConfig, StickyTableTheme, TableColumn } from "./StickyTable.types";
 
 // Create AnimatedFlatList for native-driven scroll events
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -45,6 +45,8 @@ export interface StickyTableProps<T> {
     cellTextStyle?: TextStyle;
     // Custom components
     TextComponent?: React.ComponentType<any>;
+    // Overscroll behavior for headers
+    overscrollBehavior?: OverscrollHeaderBehavior;
 }
 
 // Default key extractor (stable reference)
@@ -71,6 +73,7 @@ export default function StickyTable<T>({
     rowStyle,
     cellTextStyle,
     TextComponent = Text,
+    overscrollBehavior = "bounce",
 }: StickyTableProps<T>) {
     // Safety check for theme
     const safeTheme = theme || {
@@ -84,6 +87,30 @@ export default function StickyTable<T>({
 
     // Animated scroll position for syncing fixed column vertically
     const scrollY = useRef(new Animated.Value(0)).current;
+
+    // Derived animated value: extracts overscroll bounce offset (positive when scrollY < 0)
+    const bounceOffset = useMemo(
+        () =>
+            scrollY.interpolate({
+                inputRange: [-300, 0],
+                outputRange: [300, 0],
+                extrapolateLeft: "extend",
+                extrapolateRight: "clamp",
+            }),
+        [scrollY],
+    );
+
+    // Counter-transform: cancels native bounce on the scrollable header (negative when scrollY < 0)
+    const counterBounce = useMemo(
+        () =>
+            scrollY.interpolate({
+                inputRange: [-300, 0],
+                outputRange: [-300, 0],
+                extrapolateLeft: "extend",
+                extrapolateRight: "clamp",
+            }),
+        [scrollY],
+    );
 
     // Sorting state
     const [direction, setDirection] = useState<"asc" | "desc" | null>(null);
@@ -235,8 +262,6 @@ export default function StickyTable<T>({
                     top: 0,
                     bottom: 0,
                     backgroundColor: background,
-                    borderRightWidth: 2,
-                    borderRightColor: border,
                     zIndex: 10,
                 },
                 fixedHeaderCell: {
@@ -246,6 +271,8 @@ export default function StickyTable<T>({
                     height: HEADER_HEIGHT,
                     borderBottomWidth: 2,
                     borderBottomColor: border,
+                    borderRightWidth: 2,
+                    borderRightColor: border,
                 },
                 fixedColumnBody: {
                     flex: 1,
@@ -258,6 +285,8 @@ export default function StickyTable<T>({
                     borderBottomWidth: 1,
                     borderBottomColor: border,
                     backgroundColor: background,
+                    borderRightWidth: 2,
+                    borderRightColor: border,
                 },
                 // Empty and loading states
                 emptyContainer: {
@@ -287,7 +316,7 @@ export default function StickyTable<T>({
 
     // Render scrollable header row
     const renderScrollableHeader = useCallback(() => {
-        return (
+        const header = (
             <View style={[styles.headerRow, headerRowStyle]}>
                 {scrollableColumns.map((column) => {
                     const width = column.width ?? column.minWidth ?? DEFAULT_COLUMN_WIDTH;
@@ -312,7 +341,17 @@ export default function StickyTable<T>({
                 })}
             </View>
         );
-    }, [scrollableColumns, styles, sortTable, renderSortArrow, headerRowStyle, headerTextStyle, TextComponent]);
+
+        if (overscrollBehavior === "fixed") {
+            return (
+                <Animated.View style={{ transform: [{ translateY: counterBounce }] }}>
+                    {header}
+                </Animated.View>
+            );
+        }
+
+        return header;
+    }, [scrollableColumns, styles, sortTable, renderSortArrow, headerRowStyle, headerTextStyle, TextComponent, overscrollBehavior, counterBounce]);
 
     // Render scrollable data row
     const renderScrollableRow = useCallback(
@@ -473,8 +512,14 @@ export default function StickyTable<T>({
             {/* Fixed Column Overlay */}
             {fixedColumn && (
                 <View style={[styles.fixedColumnContainer, { width: fixedColumnWidth }]} pointerEvents="box-none">
-                    {/* Fixed Header (stays at top, doesn't translate) */}
-                    {renderFixedHeader()}
+                    {/* Fixed Header */}
+                    {overscrollBehavior === "bounce" ? (
+                        <Animated.View style={{ transform: [{ translateY: bounceOffset }] }}>
+                            {renderFixedHeader()}
+                        </Animated.View>
+                    ) : (
+                        renderFixedHeader()
+                    )}
 
                     {/* Fixed Body Cells (scroll with content via translateY) */}
                     <View style={styles.fixedColumnBody}>
